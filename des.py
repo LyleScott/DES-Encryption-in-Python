@@ -2,10 +2,13 @@
 Lyle Scott III
 lyle@digitalfoo.net
 http://www.digitalfoo.net
+
+CREDITS 
+This program was written by reading 'DES Algorithm Illustrated' over and over 
+and over. Thanks for this! 
+-- http://orlingrabbe.com/des.htm
+-- by J. Orlin Grabbe
 """
-
-import sys
-
 
 PC1 = [[57,  49,  41,  33,  25,  17,   9],
        [ 1,  58,  50,  42,  34,  26,  18],
