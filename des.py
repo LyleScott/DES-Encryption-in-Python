@@ -134,7 +134,6 @@ def print_broken_str(label, value, break_at=None):
 
 def generate_subkey(key64):
     """map a 64bit key to a 57bit key"""
-
     """
     8*0 - 0-1
     8*1 - 1-1
@@ -142,7 +141,6 @@ def generate_subkey(key64):
     .........
     8*N - N-1
     """
-
     key56 = [-1]*56
 
     for row_i in xrange(len(PC1)):
@@ -156,15 +154,13 @@ def generate_subkey(key64):
 
 def _PC2(c, d):
     """convert a 56 bit string (c28 concat'ed with d28) to a 48 bit string"""
-    key48 = [-1]*48
-    key56 = '%s%s' % (c, d)
-
     """
-    7*0 - 0-0 = 1
-    7*1 - 1-1 =
+    7*0 - 0-0 
+    7*1 - 1-1
     7*2 - 2-1 =
     """
-
+    key48 = [-1]*48
+    key56 = '%s%s' % (c, d)
     for row_i in xrange(len(PC2)):
         r = (7*row_i)-(row_i-1)
         for col_i in xrange(len(PC2[row_i])):
@@ -215,7 +211,7 @@ def _e(r32):
 
 
 def _p(r32):
-
+    """convert r32 (32 bit string) to a 32 bit string using permutation P"""
     key32 = [-1]*32
 
     for row_i in xrange(len(P)):
@@ -228,12 +224,23 @@ def _p(r32):
 
 
 def _xor(bits1, bits2):
+    """xor bits1 bit string with bits2 bit string.
+    also used for 2bit addition.
+    
+    Truth Table for XOR (think of T=1 and F=0...)
+    T T = F 
+    T F = T
+    F T = T
+    F F = F
+    """
     bits = []
+
     for i in xrange(len(bits1)):
         b1 = int(bits1[i])
         b2 = int(bits2[i])
         xor_bit = int(bool(b1) ^ bool(b2))
         bits.append(xor_bit)
+
     return ''.join(map(str, bits))
 
 
