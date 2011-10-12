@@ -4,7 +4,6 @@ lyle@digitalfoo.net
 http://www.digitalfoo.net
 """
 
-import re
 import sys
 
 
@@ -37,14 +36,14 @@ IP = [[58,   50,  42,  34,  26,  18,  10,   2],
       [61,   53,  45,  37,  29,  21,  13,   5],
       [63,   55,  47,  39,  31,  23,  15,   7]]
 
-EBIT= [[32,   1,   2,   3,   4,   5],
-       [ 4,   5,   6,   7,   8,   9],
-       [ 8,   9,  10,  11,  12,  13],
-       [12,  13,  14,  15,  16,  17],
-       [16,  17,  18,  19,  20,  21],
-       [20,  21,  22,  23,  24,  25],
-       [24,  25,  26,  27,  28,  29],
-       [28,  29,  30,  31,  32,   1]]
+EBIT = [[32,   1,   2,   3,   4,   5],
+        [ 4,   5,   6,   7,   8,   9],
+        [ 8,   9,  10,  11,  12,  13],
+        [12,  13,  14,  15,  16,  17],
+        [16,  17,  18,  19,  20,  21],
+        [20,  21,  22,  23,  24,  25],
+        [24,  25,  26,  27,  28,  29],
+        [28,  29,  30,  31,  32,   1]]
 
 SBOXES = {0:
             [[14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7],
@@ -56,7 +55,7 @@ SBOXES = {0:
              [ 3, 13,  4,  7, 15,  2,  8, 14, 12,  0,  1, 10,  6,  9, 11,  5],
              [ 0, 14,  7, 11, 10,  4, 13,  1,  5,  8, 12,  6,  9,  3,  2, 15],
              [13,  8, 10,  1,  3, 15,  4,  2, 11,  6,  7, 12,  0,  5, 14,  9]],
-          2:   
+          2:
             [[10,  0,  9, 14,  6,  3, 15,  5,  1, 13, 12,  7, 11,  4,  2,  8],
              [13,  7,  0,  9,  3,  4,  6, 10,  2,  8,  5, 14, 12, 11, 15,  1],
              [13,  6,  4,  9,  8, 15,  3,  0, 11,  1,  2, 12,  5, 10, 14,  7],
@@ -105,35 +104,37 @@ IP_INV = [[40,   8,  48,  16,  56,  24,  64,  32],
           [34,   2,  42,  10,  50,  18,  58,  26],
           [33,   1,  41,   9,  49,  17,  57,  25]]
 
-###############################################################################
 
-def hex_to_64binary(hex):
-    print_broken_str('hex', hex)
-    
-    int64 = long(hex, 16)
+def hex_to_64binary(hexstr):
+    """convert a hex string to a 64 bit wide binary number"""
+    print_broken_str('hex', hexstr)
+
+    int64 = long(hexstr, 16)
     print_broken_str('int64', int64)
-    
     bin64 = str(bin(int64))[2:].rjust(64, '0')
     print_broken_str('bin64', bin64)
-    
+
     return bin64
 
 
-def print_broken_str(label, input, breakAt=None):
-    if breakAt != None:
+def print_broken_str(label, value, break_at=None):
+    """print a label/value pair and insert a space in the value at break_at
+    intervals
+    """
+    if break_at != None:
         s = ''
-        for i in xrange(0, len(input), breakAt):
-            for ii in xrange(breakAt):
-                s += str(input[i+ii])
+        for i in xrange(0, len(value), break_at):
+            for ii in xrange(break_at):
+                s += str(value[i+ii])
             s += ' '
     else:
-        s = input
+        s = value
     print '%s: %s\n' % (label.ljust(10), s),
 
-    
+
 def generate_subkey(key64):
     """map a 64bit key to a 57bit key"""
-    
+
     """
     8*0 - 0-1
     8*1 - 1-1
@@ -141,94 +142,90 @@ def generate_subkey(key64):
     .........
     8*N - N-1
     """
-    
+
     key56 = [-1]*56
 
     for row_i in xrange(len(PC1)):
-        r = (8*row_i)-(row_i-1)
+        r = (8*row_i) - (row_i-1)
         for col_i in xrange(len(PC1[row_i])):
             key64_index = PC1[row_i][col_i] - 1
             key56[r+col_i-1] = key64[key64_index]
-            
+
     return ''.join(map(str, key56))
 
 
 def _PC2(c, d):
+    """convert a 56 bit string (c28 concat'ed with d28) to a 48 bit string"""
     key48 = [-1]*48
     key56 = '%s%s' % (c, d)
-    
+
     """
     7*0 - 0-0 = 1
     7*1 - 1-1 =
-    7*2 - 2-1 = 
+    7*2 - 2-1 =
     """
+
     for row_i in xrange(len(PC2)):
         r = (7*row_i)-(row_i-1)
         for col_i in xrange(len(PC2[row_i])):
             key56_index = PC2[row_i][col_i] - 1
             key48[r+col_i-1] = key56[key56_index]
-            
+
     return ''.join(map(str, key48))
-    
+
+
 def lshift(c, d, iteration):
+    """left shift bits; append knocked off bit to end of string"""
     c_lst = [n for n in c]
     d_lst = [n for n in d]
-        
+
     for i in xrange(LSHIFT_MAP[iteration]):
         c_lst.append(c_lst.pop(0))
         d_lst.append(d_lst.pop(0))
-    
+
     return (''.join(c_lst), ''.join(d_lst))
 
-###############################################################################
-        
-def m2ip(m):
+
+def initial_permutation(m):
+    """rearrange m (the message; a 64 bit string) according to the permutation
+    IP
+    """
     key64 = [-1]*64
-    
+
     for row_i in xrange(len(IP)):
         r = (9*row_i)-(row_i-1)
         for col_i in xrange(len(IP[row_i])):
             m_index = IP[row_i][col_i] - 1
             key64[r+col_i-1] = m[m_index]
-            
+
     return ''.join(map(str, key64))
-
-###############################################################################
-
-def _f(r32, key48):
-    """XOR addition"""
-    
-    tmp = []
-    
-    r32 = _e(r32)
-    
-    for i in xrange(len(r32)):
-        #print e[i], key48[i], '=', _xor(e[i], key48[i])
-        tmp.append(_xor(key48[i], r32[i]))
-    return ''.join(map(str, tmp))
 
 
 def _e(r32):
+    """convert r32 (32 bit string) to a 48 bit string using permutation E"""
     key48 = [-1]*48
-    
+
     for row_i in xrange(len(EBIT)):
         r = (7*row_i)-(row_i-1)
         for col_i in xrange(len(EBIT[row_i])):
             r32_index = EBIT[row_i][col_i] - 1
             key48[r+col_i-1] = r32[r32_index]
-            
+
     return ''.join(map(str, key48))
 
+
 def _p(r32):
+
     key32 = [-1]*32
-    
+
     for row_i in xrange(len(P)):
         r = (5*row_i)-(row_i-1)
         for col_i in xrange(len(P[row_i])):
             r32_index = P[row_i][col_i] - 1
             key32[r+col_i-1] = r32[r32_index]
-            
+
     return ''.join(map(str, key32))
+
 
 def _xor(bits1, bits2):
     bits = []
@@ -239,20 +236,19 @@ def _xor(bits1, bits2):
         bits.append(xor_bit)
     return ''.join(map(str, bits))
 
-###############################################################################
 
 def main():
     # message
     m = hex_to_64binary('0123456789ABCDEF')
     print_broken_str('M', m, 4)
     print '-'*80
-    
+
     # key
     k = hex_to_64binary('133457799BBCDFF1')
     print_broken_str('K', k, 8)
     print '-'*80
-    
-    ip = m2ip(m)
+
+    ip = initial_permutation(m)
     middle = len(ip) / 2
     l = ip[:middle]
     r = ip[middle:]
@@ -260,7 +256,7 @@ def main():
     print_broken_str('l', l, 4)
     print_broken_str('r', r, 4)
     print '-'*80
-    
+
     cd = generate_subkey(k)
     middle = len(cd) / 2
     c = cd[:middle]
@@ -269,47 +265,47 @@ def main():
     print_broken_str('c0:', c, 7)
     print_broken_str('d0:', d, 7)
     print '-'*80
-    
+
     l_prev = l
     r_prev = r
-    
+
     for round_i in xrange(16):
-        c,d = lshift(c, d, round_i)
+        (c, d) = lshift(c, d, round_i)
         print_broken_str('c%d' % (round_i+1), c, 7)
         print_broken_str('d%d' % (round_i+1), d, 7)
-        
+
         k = _PC2(c, d)
         print_broken_str('k%d' % (round_i+1), k, 6)
-        
+
         l = r_prev
         print_broken_str('L%s' % (round_i+1), l, 4)
-        
+
         e = _e(r_prev)
         print_broken_str('E(R%d)' % (round_i), e, 6)
-        
+
         x = _xor(k, e)
         print_broken_str('xor(K%d,E(R%d)' % (round_i+1, round_i), x, 6)
-        
+
         s = []
         for n in xrange(len(x) / 6):
-            start = 6*n
-            end = (6*n) + 6
+            start = 6 * n
+            end = (6 * n) + 6
             b = x[start:end]
             i = int(b[0])*2**1 + int(b[-1])*2**0
-            j = int(b[1])*2**3 + int(b[2])*2**2 + int(b[3])*2**1 + int(b[4])*2**0             
+            j = (int(b[1])*2**3 + int(b[2])*2**2 +
+                 int(b[3])*2**1 + int(b[4])*2**0)
             s.append(str(bin(SBOXES[n][i][j]))[2:].rjust(4, '0'))
-        
+
         s = ''.join(s)
         print_broken_str('S%d' % (round_i+1), s, 4)
-        
+
         f = _p(s)
         print_broken_str('f%d' % (round_i+1), f, 4)
-        
+
         r = _xor(l_prev, f)
         print_broken_str('R%d' % (round_i+1), r, 4)
         print '-'*80
-    
-###############################################################################
-    
+
+
 if __name__ == '__main__':
     main()
