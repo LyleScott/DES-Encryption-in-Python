@@ -102,27 +102,34 @@ P = [16,   7,  20,  21,
      19,  13,  30,   6,
      22,  11,   4,  25]
 
-IP_INV = [[40,   8,  48,  16,  56,  24,  64,  32],
-          [39,   7,  47,  15,  55,  23,  63,  31],
-          [38,   6,  46,  14,  54,  22,  62,  30],
-          [37,   5,  45,  13,  53,  21,  61,  29],
-          [36,   4,  44,  12,  52,  20,  60,  28],
-          [35,   3,  43,  11,  51,  19,  59,  27],
-          [34,   2,  42,  10,  50,  18,  58,  26],
-          [33,   1,  41,   9,  49,  17,  57,  25]]
+IP_INVERSE = [40,   8,  48,  16,  56,  24,  64,  32,
+              39,   7,  47,  15,  55,  23,  63,  31,
+              38,   6,  46,  14,  54,  22,  62,  30,
+              37,   5,  45,  13,  53,  21,  61,  29,
+              36,   4,  44,  12,  52,  20,  60,  28,
+              35,   3,  43,  11,  51,  19,  59,  27,
+              34,   2,  42,  10,  50,  18,  58,  26,
+              33,   1,  41,   9,  49,  17,  57,  25]
 
 
 def hex_to_64binary(hexstr):
     """convert a hex string to a 64 bit wide binary number"""
-    print_broken_str('hex', hexstr)
-
     int64 = long(hexstr, 16)
-    print_broken_str('int64', int64)
     bin64 = str(bin(int64))[2:].rjust(64, '0')
-    print_broken_str('bin64', bin64)
-
     return bin64
 
+
+def binary_to_hex(binstr):
+    """convert a binary string to a hex"""
+    hexstr = []
+    for i in xrange(0, len(binstr), 4):
+        total = 0
+        binstr_rev = ''.join([x for x in reversed(binstr[i:i+4])])
+        for ii in xrange(4):
+            total += (2**ii) * int(binstr_rev[ii])
+        hexstr.append('%X' % total)
+    return ''.join(hexstr)
+    
 
 def print_broken_str(label, value, break_at=None):
     """print a label/value pair and insert a space in the value at break_at
@@ -153,9 +160,9 @@ def permutate(permutation, in_bits, out_bits_wide):
     """Map the bits contained within in_bits to a new bit string out_bits 
     according to some permutation.
     
-    The values are mapped via:
-        1)
-        2) 
+    1) iterate through the permutation
+    1) for each value, in_bits_i, in the permutation
+    2) map the value at in_bits[in_bits_i] to out_bits[iteration]
     """
     out_bits = [-1] * out_bits_wide
     for i in xrange(len(permutation)):
@@ -184,7 +191,7 @@ def xor(bits1, bits2):
     return ''.join(map(str, bits))
 
 
-def main():
+def encrypt():
     # message
     m = hex_to_64binary('0123456789ABCDEF')
     print_broken_str('M', m, 4)
@@ -212,9 +219,10 @@ def main():
     print_broken_str('c0:', c, 7)
     print_broken_str('d0:', d, 7)
 
+    print '-'*80
+
     # loop 16 'rounds'
     for round_i in xrange(16):
-        print '-'*80
         
         # left shift the bits of c and d
         (c, d) = lshift(c, d, round_i)
@@ -263,7 +271,21 @@ def main():
         # of f
         r = xor(l_prev, f)
         print_broken_str('R%d' % (round_i+1), r, 4)
-
+    
+        print '-'*80
+        
+    # reverse left/right
+    rl = '%s%s' % (r, l)
+    print_broken_str('rl', rl, 8)
+    
+    # apply the IP_INVERSE permutation
+    encrypted_msg =  permutate(IP_INVERSE, rl, 64)
+    print_broken_str('enc msg', encrypted_msg, 8)
+    
+    # convert the final bitstring back into a hex message
+    bin2hex = binary_to_hex(encrypted_msg)
+    print_broken_str('hex', bin2hex)
+    
 
 if __name__ == '__main__':
-    main()
+    encrypt()
