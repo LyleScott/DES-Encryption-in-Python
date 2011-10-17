@@ -191,9 +191,41 @@ def xor(bits1, bits2):
     return ''.join(map(str, bits))
 
 
-def encrypt():
+def message_to_hex(msg):
+    """convert an ASCII string to (uppercase) Hex"""
+    hexstr = []
+    for c in msg:
+        hexstr.append('%X' % ord(c))
+    return ''.join(hexstr)
+
+
+def get_hexwords(msg):
+    """break the ASCII message into a 64bit (16 hex bytes) words"""
+    pad = [' '] * (16 - (len(msg) % 16))
+    msg += ''.join(pad)
+    hexwords = []
+    for i in xrange(0, len(msg), 8):
+        msg_block = msg[i:i+8]
+        m = message_to_hex(msg_block)
+        hexwords.append(m)
+    return hexwords
+
+
+def encrypt(msg):
+    """break the message string down into hexwords and encrypt each"""
+    encrypted_msg = []
+    for hexword in get_hexwords(msg):
+        print_broken_str('encrypting hexword', hexword, 2)
+        encrypted_msg.append(encrypt_hexword(hexword))
+    return ''.join(encrypted_msg)
+
+
+def encrypt_hexword(hexword):
+    """run a given hexword through the DES algorithm and return the encrypted
+    hex string
+    """
     # message
-    m = hex_to_64binary('0123456789ABCDEF')
+    m = hex_to_64binary(hexword)
     print_broken_str('M', m, 4)
 
     # key
@@ -286,6 +318,8 @@ def encrypt():
     bin2hex = binary_to_hex(encrypted_msg)
     print_broken_str('hex', bin2hex)
     
+    return bin2hex
+    
 
 if __name__ == '__main__':
-    encrypt()
+    print encrypt('The brown fox jumped over the beef stick.')
