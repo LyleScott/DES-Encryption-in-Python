@@ -149,7 +149,9 @@ def print_broken_str(label, value, break_at=None):
 
 
 def lshift(c, d, iteration):
-    """left shift bits; append knocked off bit to end of string"""
+    """left shift bits N times according to the LSHIFT_MAP (where N is the 
+    value at LSHIFT_MAP[iteration]; append knocked off bit(s) to end of string
+    """
     for i in xrange(LSHIFT_MAP[iteration]):
         c = '%s%s' % (c[1:], c[0])
         d = '%s%s' % (d[1:], d[0])
