@@ -1,17 +1,16 @@
+# -*- coding: utf-8 -*-
 """
 Lyle Scott III
 lyle@digitalfoo.net
 http://www.digitalfoo.net
 
-CREDITS 
-This program was written by reading 'DES Algorithm Illustrated' over and over 
-and over. Thanks for this! 
+CREDITS
+This program was written by reading 'DES Algorithm Illustrated' over and over
+and over. Thanks for this!
 -- http://orlingrabbe.com/des.htm
 -- by J. Orlin Grabbe
 """
-
-# print DEBUG messages
-DEBUG = True
+import sys
 
 
 PC1 = [57,  49,  41,  33,  25,  17,   9,
@@ -32,16 +31,16 @@ PC2 = [14,  17,  11,  24,   1,   5,
        44,  49,  39,  56,  34,  53,
        46,  42,  50,  36,  29,  32]
 
-LSHIFT_MAP = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2,  2, 2, 2, 1]
+LSHIFT_MAP = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
 
-IP = [58,   50,  42,  34,  26,  18,  10,   2,
-      60,   52,  44,  36,  28,  20,  12,   4,
-      62,   54,  46,  38,  30,  22,  14,   6,
-      64,   56,  48,  40,  32,  24,  16,   8,
-      57,   49,  41,  33,  25,  17,   9,   1,
-      59,   51,  43,  35,  27,  19,  11,   3,
-      61,   53,  45,  37,  29,  21,  13,   5,
-      63,   55,  47,  39,  31,  23,  15,   7]
+IP = [58,  50,  42,  34,  26,  18,  10,   2,
+      60,  52,  44,  36,  28,  20,  12,   4,
+      62,  54,  46,  38,  30,  22,  14,   6,
+      64,  56,  48,  40,  32,  24,  16,   8,
+      57,  49,  41,  33,  25,  17,   9,   1,
+      59,  51,  43,  35,  27,  19,  11,   3,
+      61,  53,  45,  37,  29,  21,  13,   5,
+      63,  55,  47,  39,  31,  23,  15,   7]
 
 E = [32,   1,   2,   3,   4,   5,
       4,   5,   6,   7,   8,   9,
@@ -114,70 +113,80 @@ IP_INVERSE = [40,   8,  48,  16,  56,  24,  64,  32,
 
 def hex_to_64binary(hexstr):
     """convert a hex string to a 64 bit wide binary number"""
-    int64 = long(hexstr, 16)
+    try:
+        int64 = long(hexstr, 16)
+    except ValueError:
+        raise ValueError('ERROR: can not convert %s to base 16.' % hexstr)
+
     bin64 = str(bin(int64))[2:].rjust(64, '0')
+
     return bin64
 
 
 def binary_to_hex(binstr):
     """convert a binary string to a hex"""
     hexstr = []
+
     for i in xrange(0, len(binstr), 4):
         total = 0
-        binstr_rev = ''.join([x for x in reversed(binstr[i:i+4])])
-        for ii in xrange(4):
-            total += (2**ii) * int(binstr_rev[ii])
+        binstr_rev = [x for x in reversed(binstr[i:i+4])]
+        for j in xrange(4):
+            total += (2**j) * int(binstr_rev[j])
         hexstr.append('%X' % total)
-    return ''.join(hexstr)
-    
 
-def print_broken_str(label, value, break_at=None):
+    return ''.join(hexstr)
+
+
+def string_chunker(label, value, break_at=None):
     """print a label/value pair and insert a space in the value at break_at
     intervals
     """
-    if not DEBUG: 
-        return
     if break_at == None:
         s = value
     else:
-        s = ''
+        s = []
         for i in xrange(0, len(value), break_at):
             for ii in xrange(break_at):
-                s += str(value[i+ii])
-            s += ' '
-    print '%s: %s\n' % (label.ljust(10), s),
+                s.append(value[i+ii])
+            s.append(' ')
+
+        s = ''.join(map(str, s[:-1]))
+
+    return '%s: %s' % (label.ljust(10), s)
 
 
 def lshift(c, d, iteration):
-    """left shift bits N times according to the LSHIFT_MAP (where N is the 
+    """left shift bits N times according to the LSHIFT_MAP (where N is the
     value at LSHIFT_MAP[iteration]; append knocked off bit(s) to end of string
     """
     for i in xrange(LSHIFT_MAP[iteration]):
         c = '%s%s' % (c[1:], c[0])
         d = '%s%s' % (d[1:], d[0])
+
     return (c, d)
 
 
 def permutate(permutation, in_bits, out_bits_wide):
-    """Map the bits contained within in_bits to a new bit string out_bits 
+    """Map the bits contained within in_bits to a new bit string out_bits
     according to some permutation.
-    
+
     1) iterate through the permutation
     1) for each value, in_bits_i, in the permutation
     2) map the value at in_bits[in_bits_i] to out_bits[iteration]
     """
     out_bits = [-1] * out_bits_wide
     for i in xrange(len(permutation)):
-        in_bits_i = permutation[i] - 1        
+        in_bits_i = permutation[i] - 1
         out_bits[i] = in_bits[in_bits_i]
-    return ''.join(map(str, out_bits))        
+
+    return ''.join(map(str, out_bits))
 
 
 def xor(bits1, bits2):
     """xor bits1 bit string with bits2 bit string; also used for 2bit addition.
-    
+
     Truth Table for XOR (think of T=1 and F=0...)
-    T T = F 
+    T T = F
     T F = T
     F T = T
     F F = F
@@ -196,86 +205,96 @@ def xor(bits1, bits2):
 def message_to_hex(msg):
     """convert an ASCII string to (uppercase) Hex"""
     hexstr = []
+
     for c in msg:
         hexstr.append('%X' % ord(c))
+
     return ''.join(hexstr)
 
 
 def get_hexwords(msg):
     """break the ASCII message into a 64bit (16 hex bytes) words"""
-    pad = [' '] * (16 - (len(msg) % 16))
-    msg += ''.join(pad)
     hexwords = []
+
     for i in xrange(0, len(msg), 8):
         msg_block = msg[i:i+8]
         m = message_to_hex(msg_block)
         hexwords.append(m)
+
+    last = hexwords[-1]
+    hexwords[-1] += ''.join(['0'] * (16-len(last)))
+
+    # TODO - remove
+    #hexwords = ['0123456789ABCDEF']
+
     return hexwords
 
 
-def encrypt(msg):
+def encrypt(key, msg):
     """break the message string down into hexwords and encrypt each"""
     encrypted_msg = []
+
     for hexword in get_hexwords(msg):
-        print_broken_str('encrypting hexword', hexword, 2)
-        encrypted_msg.append(encrypt_hexword(hexword))
+        #print string_chunker('encrypting hexword', hexword, 2)
+        encrypted_msg.append(encrypt_hexword(key, hexword))
+
     return ''.join(encrypted_msg)
 
 
-def encrypt_hexword(hexword):
+def encrypt_hexword(key, hexword):
     """run a given hexword through the DES algorithm and return the encrypted
     hex string
     """
     # message
     m = hex_to_64binary(hexword)
-    print_broken_str('M', m, 4)
+    #print string_chunker('M', m, 4)
 
     # key
-    k = hex_to_64binary('133457799BBCDFF1')
-    print_broken_str('K', k, 8)
+    k = hex_to_64binary(key)
+    #print string_chunker('K', k, 8)
 
     # initial permutation of message
     ip = permutate(IP, m, 64)
-    print_broken_str('IP', ip, 8)
-    
+    #print string_chunker('IP', ip, 8)
+
     middle = len(ip) / 2
     l = ip[:middle]
     r = ip[middle:]
-    print_broken_str('l', l, 4)
-    print_broken_str('r', r, 4)
+    #print string_chunker('l', l, 4)
+    #print string_chunker('r', r, 4)
 
     # apply PC1 permutation to the key and split in half to form c and d
     cd = permutate(PC1, k, 56)
     middle = len(cd) / 2
     c = cd[:middle]
     d = cd[middle:]
-    print_broken_str('cd:', cd, 7)
-    print_broken_str('c0:', c, 7)
-    print_broken_str('d0:', d, 7)
+    #print string_chunker('cd:', cd, 7)
+    #print string_chunker('c0:', c, 7)
+    #print string_chunker('d0:', d, 7)
 
-    print '-'*80
+    #print '-'*80
 
     # loop 16 'rounds'
     for round_i in xrange(16):
-        
+
         # left shift the bits of c and d
         (c, d) = lshift(c, d, round_i)
-        print_broken_str('c%d' % (round_i+1), c, 7)
-        print_broken_str('d%d' % (round_i+1), d, 7)
+        #print string_chunker('c%d' % (round_i+1), c, 7)
+        #print string_chunker('d%d' % (round_i+1), d, 7)
 
         # apply PC2 permutation
         k = permutate(PC2, c+d, 48)
-        print_broken_str('k%d' % (round_i+1), k, 6)
+        #print string_chunker('k%d' % (round_i+1), k, 6)
 
         # apply E permutation
         e = permutate(E, r, 48)
-        print_broken_str('E(R%d)' % (round_i), e, 6)
+        #print string_chunker('E(R%d)' % (round_i), e, 6)
 
         # xor k with e (2 bit addition)
         x = xor(k, e)
-        print_broken_str('xor(K%d,E(R%d)' % (round_i+1, round_i), x, 6)
+        #print string_chunker('xor(K%d,E(R%d)' % (round_i+1, round_i), x, 6)
 
-        # apply SBOX permutations to blocks of 6 values of the result of the 
+        # apply SBOX permutations to blocks of 6 values of the result of the
         # previous XOR.
         s = []
         for n in xrange(len(x) / 6):
@@ -287,41 +306,60 @@ def encrypt_hexword(hexword):
                  int(b[3])*2**1 + int(b[4])*2**0)
             s.append(str(bin(SBOXES[n][i][j]))[2:].rjust(4, '0'))
         s = ''.join(s)
-        print_broken_str('S%d' % (round_i+1), s, 4)
+        #print string_chunker('S%d' % (round_i+1), s, 4)
 
         # apply P permutation.
         f = permutate(P, s, 32)
-        print_broken_str('f%d' % (round_i+1), f, 4)
+        #print string_chunker('f%d' % (round_i+1), f, 4)
 
-        # save value of l to calculate r (because the r bits have to get 
+        # save value of l to calculate r (because the r bits have to get
         # shifted into l before we calculate the new r)
         l_prev = l
 
         # shift r into l (both 32 bits)
         l = r
-        print_broken_str('L%s' % (round_i+1), l, 4)
+        #print string_chunker('L%s' % (round_i+1), l, 4)
 
         # the new 32 bits of r are the saved value of l XORed/added to the value
         # of f
         r = xor(l_prev, f)
-        print_broken_str('R%d' % (round_i+1), r, 4)
-    
-        print '-'*80
-        
+        #print string_chunker('R%d' % (round_i+1), r, 4)
+
+        #print '-'*80
+
     # reverse left/right
     rl = '%s%s' % (r, l)
-    print_broken_str('rl', rl, 8)
-    
+    #print string_chunker('rl', rl, 8)
+
     # apply the IP_INVERSE permutation
     encrypted_msg =  permutate(IP_INVERSE, rl, 64)
-    print_broken_str('enc msg', encrypted_msg, 8)
-    
+    #print string_chunker('enc msg', encrypted_msg, 8)
+
     # convert the final bitstring back into a hex message
     bin2hex = binary_to_hex(encrypted_msg)
-    print_broken_str('hex', bin2hex)
-    
+    #print string_chunker('hex', bin2hex)
+
     return bin2hex
-    
+
+
+def run():
+    if len(sys.argv) == 3:
+        key = sys.argv[1].upper()
+        msg = sys.argv[2]
+
+        print 'key:', key
+        print 'msg:', msg
+
+        if len(key) != 16:
+            print 'ERROR: KEY needs to be 16 characters.'
+
+    else:
+        print 'usage: python des.py KEY MSG'
+        sys.exit(1)
+
+    enc = encrypt(key, msg)
+    print string_chunker('encrypted:', enc, 16)
+
 
 if __name__ == '__main__':
-    print encrypt('The brown fox jumped over the beef stick.')
+    run()
