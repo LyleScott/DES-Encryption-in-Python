@@ -1,12 +1,8 @@
-# Lyle Scott III
-# lyle@digitalfoo.net
-# http://www.digitalfoo.net
-
 I was curious how to implement DES one weekend so I decided to try it in
 Python.
 
 This program was written by reading 'DES Algorithm Illustrated' over and over
 and over. It was written by J. Orlin Grabbe and it located at http://orlingrabbe.com/des.htm
 
-I did <i>not</i> intend to add error checking or optimizing anything... that was
+I did not intend to add error checking or optimizing anything... that was
 beside the point. Don't judge me. :P
